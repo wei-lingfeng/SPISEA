@@ -1106,90 +1106,100 @@ class Isochrone(object):
         return
 
 class IsochronePhot(Isochrone):
-    """
-    Make an isochrone with synthetic photometry in various filters.
-    Load from file if possible.
+    def __init__(
+        self, logAge, AKs, distance,
+        metallicity=0.0,
+        evo_model=default_evo_model, atm_func=default_atm_func,
+        wd_atm_func = default_wd_atm_func,
+        wave_range=[3000, 52000],
+        red_law=default_red_law, mass_sampling=1, iso_dir='./',
+        min_mass=None, max_mass=None, rebin=True, recomp=False,
+        filters=['ubv,U', 'ubv,B', 'ubv,V',
+                'ubv,R', 'ubv,I'],
+    confirm_recomp=False,
+    verbose=False
+    ):
+        """
+        Make an isochrone with synthetic photometry in various filters.
+        Load from file if possible.
 
-    Parameters
-    ----------
-    logAge : float
-        The age of the isochrone, in log(years)
+        Parameters
+        ----------
+        logAge : float
+            The age of the isochrone, in log(years)
 
-    AKs : float
-        The total extinction in Ks filter, in magnitudes
+        AKs : float
+            The total extinction in Ks filter, in magnitudes
 
-    distance : float
-        The distance of the isochrone, in pc
+        distance : float
+            The distance of the isochrone, in pc
 
-    metallicity : float, optional
-        The metallicity of the isochrone, in [M/H].
-        Default is 0.
+        metallicity : float, optional
+            The metallicity of the isochrone, in [M/H].
+            Default is 0.
 
-    evo_model: model evolution class, optional
-        Set the stellar evolution model class.
-        Default is evolution.MISTv1().
+        evo_model: model evolution class, optional
+            Set the stellar evolution model class.
+            Default is evolution.MISTv1().
 
-    atm_func: model atmosphere function, optional
-        Set the stellar atmosphere models for the stars.
-        Default is atmospheres.get_merged_atmosphere.
+        atm_func: model atmosphere function, optional
+            Set the stellar atmosphere models for the stars.
+            Default is atmospheres.get_merged_atmosphere.
 
-    wd_atm_func: white dwarf model atmosphere function, optional
-        Set the stellar atmosphere models for the white dwafs.
-        Default is atmospheres.get_wd_atmosphere
+        wd_atm_func: white dwarf model atmosphere function, optional
+            Set the stellar atmosphere models for the white dwafs.
+            Default is atmospheres.get_wd_atmosphere
 
-    red_law : reddening law object, optional
-        Define the reddening law for the synthetic photometry.
-        Default is reddening.RedLawNishiyama09().
+        red_law : reddening law object, optional
+            Define the reddening law for the synthetic photometry.
+            Default is reddening.RedLawNishiyama09().
 
-    iso_dir : path, optional
-         Path to isochrone directory. Code will check isochrone
-         directory to see if isochrone file already exists; if it
-         does, it will just read the isochrone. If the isochrone
-         file doesn't exist, then save isochrone to the isochrone
-         directory.
+        iso_dir : path, optional
+            Path to isochrone directory. Code will check isochrone
+            directory to see if isochrone file already exists; if it
+            does, it will just read the isochrone. If the isochrone
+            file doesn't exist, then save isochrone to the isochrone
+            directory.
 
-    mass_sampling : int, optional
-        Sample the raw isochrone every `mass_sampling` steps. The default
-        is mass_sampling = 0, which is the native isochrone mass sampling
-        of the evolution model.
+        mass_sampling : int, optional
+            Sample the raw isochrone every `mass_sampling` steps. The default
+            is mass_sampling = 0, which is the native isochrone mass sampling
+            of the evolution model.
 
-    wave_range : list, optional
-        length=2 list with the wavelength min/max of the final spectra.
-        Units are Angstroms. Default is [3000, 52000].
+        wave_range : list, optional
+            length=2 list with the wavelength min/max of the final spectra.
+            Units are Angstroms. Default is [3000, 52000].
 
-    min_mass : float or None, optional
-        If float, defines the minimum mass in the isochrone.
-        Unit is solar masses. Default is None
+        min_mass : float or None, optional
+            If float, defines the minimum mass in the isochrone.
+            Unit is solar masses. Default is None
 
-    max_mass : float or None, optional
-        If float, defines the maxmimum mass in the isochrone.
-        Units is solar masses. Default is None.
+        max_mass : float or None, optional
+            If float, defines the maxmimum mass in the isochrone.
+            Units is solar masses. Default is None.
 
-    rebin : boolean, optional
-        If true, rebins the atmospheres so that they are the same
-        resolution as the Castelli+04 atmospheres. Default is True,
-        which is often sufficient synthetic photometry in most cases.
+        rebin : boolean, optional
+            If true, rebins the atmospheres so that they are the same
+            resolution as the Castelli+04 atmospheres. Default is True,
+            which is often sufficient synthetic photometry in most cases.
 
-    recomp : boolean, optional
-        If true, recalculate the isochrone photometry even if
-        the savefile exists. You should recompute anytime you change
-        the filter set (see filters below).
+        recomp : boolean, optional
+            If true, recalculate the isochrone photometry even if
+            the savefile exists. You should recompute anytime you change
+            the filter set (see filters below).
 
-    filters : array of strings, optional
-        Define what filters the synthetic photometry
-        will be calculated for, via the filter string
-        identifier.
-    """
-    def __init__(self, logAge, AKs, distance,
-                 metallicity=0.0,
-                 evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func,
-                 wave_range=[3000, 52000],
-                 red_law=default_red_law, mass_sampling=1, iso_dir='./',
-                 min_mass=None, max_mass=None, rebin=True, recomp=False,
-                 filters=['ubv,U', 'ubv,B', 'ubv,V',
-                          'ubv,R', 'ubv,I'],
-                verbose=False):
+        filters : array of strings, optional
+            Define what filters the synthetic photometry
+            will be calculated for, via the filter string
+            identifier.
+        
+        confirm_recomp : boolean, optional
+            If true, will ask for user confirmation before recalculating the isochrone photometry
+        
+        verbose : boolean, optional
+            If true, will print out information about the isochrone generation and photometry calculation.
+        """
+
         self.metallicity = metallicity
         self.verbose=verbose
 
@@ -1232,10 +1242,16 @@ class IsochronePhot(Isochrone):
             if verbose:
                 print(f'Generating new isochrone of log(t)={logAge:.2f}, AKs={AKs:.2f}, d={distance} pc')
 
-                user_input = input(f"Isochrone file {self.save_file} does not exist or needs to be regenerated. Do you want to proceed? (yes/no): ").strip().lower()
-                if user_input != 'yes':
-                    print("Operation canceled by the user.")
-                    return
+                if confirm_recomp:
+                    while True:
+                        user_input = input(f"Isochrone file {self.save_file} does not exist or needs to be regenerated. Do you want to proceed? (y/n): ").strip().lower()
+                        if user_input == 'y':
+                            break
+                        elif user_input == 'n':
+                            print("Operation canceled by the user.")
+                            return
+                        else:
+                            print("Invalid input. Please enter 'y' or 'n'.")
 
             super().__init__(logAge, AKs, distance,
                              metallicity=metallicity,
